@@ -1,0 +1,52 @@
+[package]
+edition.workspace = true
+name = "codex-personal-agent"
+version.workspace = true
+
+[lib]
+name = "codex_personal_agent"
+path = "src/lib.rs"
+
+[[bin]]
+name = "personal-agent"
+path = "src/bin/main.rs"
+
+[dependencies]
+# Core
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# Vector Store
+qdrant-client = "1"
+
+# LLM Integration
+async-trait = "0.1"
+futures = "0.3"
+reqwest = { version = "0.12", features = ["json", "stream"] }
+
+# File indexing
+pdfium-render = { version = "0.8", optional = true }
+regex = "1"
+walkdir = "2"
+
+# Plugin system
+dlopen2 = "0.4"
+libloading = "0.8"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5"
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile = "3"

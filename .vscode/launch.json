@@ -4,10 +4,65 @@
     {
       "type": "lldb",
       "request": "launch",
+      "name": "Custom launch",
+      "targetCreateCommands": [
+        "target create ${workspaceFolder}/<program>"
+      ],
+      "processCreateCommands": [
+        "settings set target.run-args value1 value2 value3",
+        "process launch"
+      ]
+    },
+    {
+      "command": "npm start",
+      "name": "Run npm start",
+      "request": "launch",
+      "type": "node-terminal"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Custom launch",
+      "targetCreateCommands": [
+        "target create ${workspaceFolder}/<program>"
+      ],
+      "processCreateCommands": [
+        "settings set target.run-args value1 value2 value3",
+        "process launch"
+      ]
+    },
+    {
+      "name": "Containers .NET Attach (Preview)",
+      "type": "docker",
+      "request": "attach",
+      "platform": "netCore",
+      "sourceFileMap": {
+        "/src": "${workspaceFolder}"
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
       "name": "Cargo launch",
       "cargo": {
         "cwd": "${workspaceFolder}/codex-rs",
-        "args": ["build", "--bin=codex-tui"]
+        "args": [
+          "build",
+          "--bin=codex-tui"
+        ]
+      },
+      "args": []
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Run codex-tui",
+      "cargo": {
+        "cwd": "${workspaceFolder}/codex-rs",
+        "args": [
+          "run",
+          "--bin=codex-tui"
+        ]
       },
       "args": []
     },
@@ -16,7 +71,9 @@
       "request": "attach",
       "name": "Attach to running codex CLI",
       "pid": "${command:pickProcess}",
-      "sourceLanguages": ["rust"]
+      "sourceLanguages": [
+        "rust"
+      ]
     }
   ]
 }
