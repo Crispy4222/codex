@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Crispy Agent
+Comment=Local AI chat with a user-controlled token budget
+Exec=@EXEC_PATH@
+Icon=utilities-terminal
+Terminal=false
+Categories=Development;
+Keywords=AI;Ollama;Assistant;Local;
+StartupNotify=true
