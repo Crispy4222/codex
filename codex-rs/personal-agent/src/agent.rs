@@ -19,15 +19,45 @@ pub struct PersonalAgent {
 impl PersonalAgent {
     pub async fn new(config: AgentConfig) -> Result<Self> {
         // Initialize vector store
-        let vector_store =
-            VectorStore::new(&config.vector_store.url, &config.vector_store.collection).await?;
+        let vector_store = match VectorStore::new(
+            &config.vector_store.url,
+            &config.vector_store.collection,
+        )
+        .await
+        {
+            Ok(vs) => vs,
+            Err(e) => {
+                eprintln!(
+                    "⚠️  Warning: Could not connect to Qdrant at {}",
+                    config.vector_store.url
+                );
+                eprintln!("   Error: {}", e);
+                eprintln!("   Run: docker run -p 6333:6333 qdrant/qdrant");
+                return Err(anyhow::anyhow!(
+                    "Qdrant vector store unavailable. Please start it with: docker run -p 6333:6333 qdrant/qdrant"
+                ));
+            }
+        };
 
-        vector_store
+        if let Err(e) = vector_store
             .create_collection(config.vector_store.dimension)
-            .await?;
+            .await
+        {
+            eprintln!("Warning: Could not create Qdrant collection: {}", e);
+        }
 
         // Initialize LLM provider
-        let llm_provider = LlmFactory::create(&config.llm)?;
+        let llm_provider = match LlmFactory::create(&config.llm) {
+            Ok(provider) => provider,
+            Err(e) => {
+                eprintln!("⚠️  Error creating LLM provider: {}", e);
+                if let crate::config::LlmConfig::Ollama { url, model } = &config.llm {
+                    eprintln!("   Configured for Ollama at {}", url);
+                    eprintln!("   Run: ollama serve (then: ollama pull {})", model);
+                }
+                return Err(e);
+            }
+        };
 
         // Initialize knowledge base
         let kb_llm = LlmFactory::create(&config.llm)?;

@@ -1,9 +1,9 @@
 use crate::config::LlmConfig;
 use anyhow::Result;
 use anyhow::anyhow;
+use async_trait::async_trait;
 use serde::Deserialize;
 use serde::Serialize;
-use async_trait::async_trait;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmRequest {
@@ -53,6 +53,8 @@ struct OllamaOptions {
 #[derive(Debug, Deserialize)]
 struct OllamaGenerateResponse {
     response: String,
+    #[serde(default)]
+    eval_count: usize,
 }
 
 #[derive(Debug, Serialize)]
@@ -72,7 +74,7 @@ impl LlmProvider for OllamaProvider {
         let client = reqwest::Client::new();
 
         let req = OllamaGenerateRequest {
-            model: self.model.clone(),
+            model: std::env::var("CRISPY_CHAT_MODEL").unwrap_or_else(|_| self.model.clone()),
             prompt: request.prompt.clone(),
             stream: false,
             options: Some(OllamaOptions {
@@ -91,7 +93,7 @@ impl LlmProvider for OllamaProvider {
 
         Ok(LlmResponse {
             text: body.response,
-            tokens_used: 0, // Ollama doesn't return token count
+            tokens_used: body.eval_count,
         })
     }
 
@@ -99,7 +101,8 @@ impl LlmProvider for OllamaProvider {
         let client = reqwest::Client::new();
 
         let req = OllamaEmbedRequest {
-            model: self.model.clone(),
+            model: std::env::var("CRISPY_EMBED_MODEL")
+                .unwrap_or_else(|_| "nomic-embed-text".to_string()),
             input: text.to_string(),
         };
 
@@ -160,7 +163,9 @@ impl LlmFactory {
                 api_key.clone(),
                 model.clone(),
             ))),
-            LlmConfig::Custom { plugin_path: _ } => Err(anyhow!("Custom plugins not yet implemented")),
+            LlmConfig::Custom { plugin_path: _ } => {
+                Err(anyhow!("Custom plugins not yet implemented"))
+            }
         }
     }
 }

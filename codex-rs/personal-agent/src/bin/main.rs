@@ -27,6 +27,12 @@ enum Commands {
         config_path: Option<PathBuf>,
     },
 
+    /// Setup: Start required services (Qdrant, Ollama)
+    Setup,
+
+    /// Check system requirements and diagnose issues
+    Doctor,
+
     /// Index knowledge files
     Index {
         #[arg(help = "Paths to index")]
@@ -66,13 +72,22 @@ enum PluginAction {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
 
     let cli = Cli::parse();
 
     // Load config
     let config = if let Some(config_path) = cli.config {
-        AgentConfig::load_from_file(config_path)?
+        match AgentConfig::load_from_file(config_path) {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                eprintln!("Error loading config: {}", e);
+                eprintln!("Using default configuration");
+                AgentConfig::default()
+            }
+        }
     } else {
         AgentConfig::default()
     };
@@ -82,6 +97,69 @@ async fn main() -> Result<()> {
             let path = config_path.unwrap_or_else(|| PathBuf::from("agent-config.json"));
             config.save_to_file(&path)?;
             println!("✓ Configuration saved to {}", path.display());
+        }
+
+        Commands::Setup => {
+            println!("🔧 Setting up Personal Agent...\n");
+            println!("To get started, run:");
+            println!("  1. docker run -d -p 6333:6333 qdrant/qdrant  # Start Qdrant");
+            println!(
+                "  2. ollama serve                              # Start Ollama (separate terminal)"
+            );
+            println!("  3. ollama pull mistral                       # Download model");
+            println!("  4. personal-agent index ~/GARAGE/logs        # Index your files");
+            println!("  5. personal-agent repl                       # Start interactive mode\n");
+            println!("Configuration: {:?}", config.data_dir);
+            println!("Knowledge paths: {:?}", config.knowledge_paths);
+            println!("Vector store: {}", config.vector_store.url);
+            println!("LLM model: {:?}", config.llm);
+        }
+
+        Commands::Doctor => {
+            println!("🏥 Diagnosing system...\n");
+
+            // Check Qdrant
+            print!("Checking Qdrant at {}... ", config.vector_store.url);
+            match reqwest::Client::new()
+                .get(&format!("{}/health", config.vector_store.url))
+                .send()
+                .await
+            {
+                Ok(_) => println!("✓ Running"),
+                Err(_) => println!("✗ Not responding"),
+            }
+
+            // Check LLM
+            if let codex_personal_agent::config::LlmConfig::Ollama { url, model } = &config.llm {
+                print!("Checking Ollama at {}... ", url);
+                match reqwest::Client::new()
+                    .get(&format!("{}/api/tags", url))
+                    .send()
+                    .await
+                {
+                    Ok(resp) => {
+                        if resp.status().is_success() {
+                            println!("✓ Running");
+                            println!("  Model: {}", model);
+                        } else {
+                            println!("✗ Not responding");
+                        }
+                    }
+                    Err(_) => println!("✗ Not responding"),
+                }
+            }
+
+            // Check knowledge paths
+            println!("\nKnowledge paths:");
+            for path in &config.knowledge_paths {
+                if path.exists() {
+                    println!("  ✓ {}", path.display());
+                } else {
+                    println!("  ✗ {} (not found)", path.display());
+                }
+            }
+
+            println!("\n📝 Configuration directory: {:?}", config.data_dir);
         }
 
         Commands::Index { paths } => {

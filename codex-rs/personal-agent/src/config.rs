@@ -68,8 +68,20 @@ impl Default for AgentConfig {
             .unwrap_or_else(|| PathBuf::from("."))
             .join("personal-agent");
 
+        // Use GARAGE/logs as primary knowledge source
+        let mut knowledge_paths = vec![];
+        if let Ok(home) = std::env::var("HOME") {
+            let garage_logs = PathBuf::from(&home).join("GARAGE/logs");
+            if garage_logs.exists() {
+                knowledge_paths.push(garage_logs);
+            }
+        }
+        if knowledge_paths.is_empty() {
+            knowledge_paths.push(dirs::home_dir().unwrap_or_default().join("Documents"));
+        }
+
         Self {
-            knowledge_paths: vec![dirs::home_dir().unwrap_or_default().join("Documents")],
+            knowledge_paths,
             vector_store: VectorStoreConfig {
                 url: "http://localhost:6333".to_string(),
                 collection: "personal-knowledge".to_string(),
@@ -77,7 +89,7 @@ impl Default for AgentConfig {
             },
             llm: LlmConfig::Ollama {
                 url: "http://localhost:11434".to_string(),
-                model: "llama2".to_string(),
+                model: "mistral".to_string(),
             },
             agent: AgentBehavior {
                 max_tokens: 2048,
