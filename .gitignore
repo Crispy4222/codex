@@ -33,6 +33,7 @@ CLAUDE.md
 
 # caches
 .cache/
+.cargo/
 .turbo/
 .parcel-cache/
 .eslintcache
