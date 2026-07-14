@@ -1,0 +1,79 @@
+#!/bin/bash
+# Personal Agent Launcher - Simple controls for different modes
+
+AGENT_PATH="/home/crispycreations/.codex/codex/codex-rs/personal-agent/agent.sh"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+show_menu() {
+    clear
+    echo -e "${GREEN}╔═══════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║   Personal Agent Launcher Menu        ║${NC}"
+    echo -e "${GREEN}╚═══════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${CYAN}1${NC} - Chat Mode (Quick responses)"
+    echo -e "${CYAN}2${NC} - Smart Mode (Good balance)"
+    echo -e "${CYAN}3${NC} - Deep Mode (Best quality)"
+    echo -e "${CYAN}4${NC} - Wizard Mode (Most intelligent)"
+    echo -e "${CYAN}5${NC} - System Doctor"
+    echo -e "${CYAN}6${NC} - Quick Query"
+    echo -e "${CYAN}0${NC} - Exit"
+    echo ""
+}
+
+while true; do
+    show_menu
+    printf "${YELLOW}Choose mode [0-6]:${NC} "
+    read -r choice
+    
+    case "$choice" in
+        1) 
+            echo -e "\n${GREEN}Starting in Fast Mode (orca-mini)...${NC}\n"
+            sleep 1
+            "$AGENT_PATH" fast
+            ;;
+        2)
+            echo -e "\n${GREEN}Starting in Smart Mode (qwen2.5-coder)...${NC}\n"
+            sleep 1
+            "$AGENT_PATH" smart
+            ;;
+        3)
+            echo -e "\n${GREEN}Starting in Deep Mode (c4-personal-runtime)...${NC}"
+            echo -e "${YELLOW}Close VS Code if it's running for best performance${NC}\n"
+            sleep 2
+            "$AGENT_PATH" deep
+            ;;
+        4)
+            echo -e "\n${GREEN}Starting in Wizard Mode (glm-4.7-flash)...${NC}"
+            echo -e "${YELLOW}This needs a lot of RAM. Close VS Code first!${NC}\n"
+            sleep 2
+            "$AGENT_PATH" wizard
+            ;;
+        5)
+            echo -e "\n${GREEN}Running System Health Check...${NC}\n"
+            "$AGENT_PATH" doctor
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        6)
+            printf "${YELLOW}Your question:${NC} "
+            read -r question
+            echo ""
+            "$AGENT_PATH" query "$question"
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        0)
+            echo -e "\n${GREEN}Goodbye!${NC}\n"
+            exit 0
+            ;;
+        *)
+            echo -e "${YELLOW}Invalid choice. Try again.${NC}"
+            sleep 1
+            ;;
+    esac
+done
